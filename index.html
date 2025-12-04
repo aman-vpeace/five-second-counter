@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5-Second Counter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f4f4f4;
+    }
+    .container {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #pauseBtn { background: #ff9800; color: white; }
+    #resetBtn { background: #f44336; color: white; }
+    #startBtn { background: #4caf50; color: white; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>5-Second Auto Counter</h2>
+
+    <label>Enter number of reps:</label><br>
+    <input type="number" id="repsInput" min="1" style="padding:8px;margin-top:5px"><br>
+
+    <h1 id="countDisplay">0</h1>
+    <p>Next tick in <span id="timer">5</span> seconds</p>
+
+    <button id="startBtn">Start</button>
+    <button id="pauseBtn">Pause</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+
+  <audio id="tickSound">
+    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  </audio>
+
+  <script>
+    let interval = null;
+    let countdown = 5;
+    let current = 0;
+    let reps = 0;
+    let paused = false;
+
+    const timerDisplay = document.getElementById("timer");
+    const countDisplay = document.getElementById("countDisplay");
+    const tickSound = document.getElementById("tickSound");
+    // ambientSound will be fetched after DOM loads
+let ambientSound = null;
+
+    function updateDisplay() {
+      timerDisplay.textContent = countdown;
+      countDisplay.textContent = current;
+    }
+
+    function startCounter() {
+      // Allow ambience to start after user interaction
+      if (ambientSound) ambientSound.play().catch(() => {});
+      if (interval) return; // prevent multiple intervals
+
+      reps = parseInt(document.getElementById("repsInput").value);
+      if (!reps || reps <= 0) {
+        alert("Please enter valid reps");
+        return;
+      }
+
+      interval = setInterval(() => {
+        if (paused) return;
+
+        countdown--;
+        updateDisplay();
+
+        // Speak each second
+        if (countdown > 0 && countdown <= 5) {
+          const utterEach = new SpeechSynthesisUtterance(String(countdown));
+          // ASMR female whisper settings
+          const voices = speechSynthesis.getVoices();
+          const femaleVoice = voices.find(v => v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('woman') || v.name.toLowerCase().includes('samantha') || v.name.toLowerCase().includes('ava') || v.name.toLowerCase().includes('victoria'));
+          if (femaleVoice) utterEach.voice = femaleVoice;
+          // More natural ASMR whisper
+          utterEach.pitch = 0.8;  // slightly higher for natural female tone
+          utterEach.rate = 0.85;  // smoother pace
+          utterEach.volume = 0.45;  // fuller but still soft
+          utterEach.lang = 'en-US';
+          speechSynthesis.cancel();
+          speechSynthesis.speak(utterEach);
+        }
+
+        if (countdown === 0) {
+          
+          current++;
+          countdown = 5;
+
+          updateDisplay();
+
+          if (current >= reps) {
+            clearInterval(interval);
+            interval = null;
+          }
+        }
+      }, 1000);
+    }
+
+    // Fetch ambient sound element after DOM is fully loaded
+ambientSound = document.getElementById("ambientSound");
+
+document.getElementById("startBtn").onclick = startCounter;
+
+    document.getElementById("pauseBtn").onclick = () => {
+      paused = !paused;
+      document.getElementById("pauseBtn").textContent = paused ? "Resume" : "Pause";
+    };
+
+    document.getElementById("resetBtn").onclick = () => {
+      clearInterval(interval);
+      interval = null;
+      countdown = 5;
+      current = 0;
+      paused = false;
+      updateDisplay();
+      document.getElementById("pauseBtn").textContent = "Pause";
+    };
+
+    updateDisplay();
+  </script>
+  <audio id="ambientSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7cba1cc403.mp3?filename=calm-wind-ambient-110058.mp3" loop autoplay></audio>
+</body>
+</html>
